@@ -18,6 +18,8 @@ except ImportError:
   pass
 
 parser = ArgumentParser()
+if have_secret_storage_accessor:
+  parser.add_argument("--one-time-key", action="store_true", help="Remove the value from server after query.")
 address_parser = parser.add_argument_group(title="email address").add_mutually_exclusive_group(required=True)
 address_parser.add_argument(
   "--email",
@@ -95,7 +97,7 @@ elif config.email_from_stdin:
   email_address = stdin.readline().strip()
 elif have_secret_storage_accessor and config.email_key is not None:
   key = b16decode(config.email_key.encode("utf-8"), casefold=True)
-  email_address_viewer = secret_storage_accessor.get_secret(key)
+  email_address_viewer = secret_storage_accessor.get_secret(memoryview(key), remove=config.one_time_key)
   email_address = email_address_viewer.tobytes().decode("utf-8")
   secret_storage_accessor.release_secure_string(email_address_viewer)
 
@@ -106,7 +108,7 @@ elif config.password_from_stdin:
   email_password = stdin.readline().strip()
 elif have_secret_storage_accessor and config.password_key is not None:
   key = b16decode(config.password_key.encode("utf-8"), casefold=True)
-  email_password_viewer = secret_storage_accessor.get_secret(key)
+  email_password_viewer = secret_storage_accessor.get_secret(memoryview(key), remove=config.one_time_key)
   email_password = email_password_viewer.tobytes().decode("utf-8")
   secret_storage_accessor.release_secure_string(email_password_viewer)
 
